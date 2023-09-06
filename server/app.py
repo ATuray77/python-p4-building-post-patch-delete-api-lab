@@ -30,17 +30,44 @@ def bakeries():
     )
     return response
 
-@app.route('/bakeries/<int:id>')
+@app.route('/bakeries/<int:id>', methods=['GET', 'PATCH'])
 def bakery_by_id(id):
-
     bakery = Bakery.query.filter_by(id=id).first()
-    bakery_serialized = bakery.to_dict()
+# START OF MY PATCH WORK
+    if bakery == None:
+        response_body = {
+            "message": "This record does not exist in our database. Please try again"
+        }
+        response = make_response(jsonify(response_body), 404)
+        return response
+    
+    elif request.method == 'GET':
+        bakery_serialized = bakery.to_dict()
 
-    response = make_response(
+        response = make_response(
         bakery_serialized,
         200
-    )
-    return response
+        )
+        return response
+    
+    elif request.method == 'PATCH':
+        bakery = Bakery.query.filter_by(id=id).first()
+
+        for attr in request.form:
+            setattr(bakery, attr, request.form.get(attr))
+        
+        db.session.add(bakery)
+        db.session.commit()
+
+        bakery_serialized = bakery.to_dict()
+
+        response = make_response(
+        bakery_serialized,
+        200
+        )
+        return response
+
+# END OF MY PATCH WORK
 # START OF MY POST WORK
 @app.route('/baked_goods', methods=['GET', 'POST'])
 def baked_goods():
@@ -67,7 +94,16 @@ def baked_goods():
          db.session.add(new_bakedgood)
          db.session.commit()
 
+         baked_good_dict = new_bakedgood.to_dict() # after commiting to the db create new_bakedgood.to_dict this populates it with an id and data from its bakery
+
+         response = make_response(
+         baked_good_dict,
+         201  # means that a resource has been successfully created
+        )
+         return response
+
 #END OF MY POST WORK
+
 @app.route('/baked_goods/by_price')
 def baked_goods_by_price():
     baked_goods_by_price = BakedGood.query.order_by(BakedGood.price).all()
