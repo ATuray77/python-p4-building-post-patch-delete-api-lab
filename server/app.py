@@ -104,6 +104,36 @@ def baked_goods():
 
 #END OF MY POST WORK
 
+# START OF MY DELETE WORK
+@app.route('/baked_goods/<int:id>', methods=['GET', 'DELETE'])
+def baked_good(id):
+    bakedgoods = BakedGood.query.filter_by(id=id).first()
+    if request.method == 'GET':
+        bakery_serialized = bakedgoods.to_dict()
+
+        response = make_response(
+        bakery_serialized,
+        200
+        )
+        return response
+
+    elif request.method == 'DELETE':
+        db.session.delete(bakedgoods)
+        db.session.commit()
+
+        response_body = {
+            "delete_successful": True,
+            "message": "BakeGood deleted"
+        }
+        response = make_response(
+            response_body,
+            200
+        )
+        return response
+
+
+# END OF MY DELETE WORK
+
 @app.route('/baked_goods/by_price')
 def baked_goods_by_price():
     baked_goods_by_price = BakedGood.query.order_by(BakedGood.price).all()
@@ -127,6 +157,10 @@ def most_expensive_baked_good():
         200
     )
     return response
+
+
+
+
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
